@@ -1,7 +1,7 @@
 ---
 title: StreamingT2V
 emoji: 🔥
-colorFrom: indigo
+colorFrom: blue
 colorTo: purple
 sdk: gradio
 sdk_version: 4.25.0
