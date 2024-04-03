@@ -7,7 +7,7 @@ sdk: gradio
 sdk_version: 4.25.0
 app_file: t2v_enhanced/gradio_demo.py
 pinned: false
-short_description: Consistent, Dynamic, and Extendable Long Video Generation fr
+short_description: Consistent, Dynamic, and Extendable Long Video Generation
 ---
 
 
@@ -110,5 +110,3 @@ If you use our work in your research, please cite our publication:
   year={2024}
 }
 ```
-
-
