@@ -1,8 +1,8 @@
 ---
 title: StreamingT2V
 emoji: 🔥
-colorFrom: blue
-colorTo: purple
+colorFrom: purple
+colorTo: blue
 sdk: gradio
 sdk_version: 4.25.0
 app_file: t2v_enhanced/gradio_demo.py
