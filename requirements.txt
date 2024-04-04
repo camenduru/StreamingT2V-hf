@@ -1,5 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu117
-torch==2.0.0+cu117
+torch==2.0.0
 torchdata
 torchvision
 accelerate==0.28.0
