@@ -4,7 +4,7 @@ import torch
 from torchvision.transforms.functional import to_pil_image
 import torch.nn as nn
 import kornia
-# import open_clip
+import open_clip
 from transformers import CLIPVisionModelWithProjection, AutoProcessor
 from transformers.models.bit.image_processing_bit import BitImageProcessor
 from einops import rearrange, repeat
@@ -73,15 +73,15 @@ class FrozenOpenCLIPImageEmbedder(AbstractEncoder):
         output_tokens=False,
     ):
         super().__init__()
-        # model, _, _ = open_clip.create_model_and_transforms(
-        #     arch,
-        #     device=torch.device("cpu"),
-        #     pretrained=version,
-        # )
-        # del model.transformer
-        # self.model = model
-        self.model_t = CLIPVisionModelWithProjection.from_pretrained("laion/CLIP-ViT-H-14-laion2B-s32B-b79K")
-        self.processor = AutoProcessor.from_pretrained("laion/CLIP-ViT-H-14-laion2B-s32B-b79K")
+        model, _, _ = open_clip.create_model_and_transforms(
+            arch,
+            device=torch.device("cpu"),
+            pretrained=version,
+        )
+        del model.transformer
+        self.model = model
+        # self.model_t = CLIPVisionModelWithProjection.from_pretrained("laion/CLIP-ViT-H-14-laion2B-s32B-b79K")
+        # self.processor = AutoProcessor.from_pretrained("laion/CLIP-ViT-H-14-laion2B-s32B-b79K")
 
         self.max_crops = num_image_crops
         self.pad_to_max_len = self.max_crops > 0
@@ -120,10 +120,10 @@ class FrozenOpenCLIPImageEmbedder(AbstractEncoder):
         return x
 
     def freeze(self):
-        # self.model = self.model.eval()
+        self.model = self.model.eval()
         for param in self.parameters():
             param.requires_grad = False
-        self.model_t = self.model_t.eval()
+        # self.model_t = self.model_t.eval()
 
     def forward(self, image, no_dropout=False):
         z = self.encode_with_vision_transformer(image)
@@ -181,40 +181,40 @@ class FrozenOpenCLIPImageEmbedder(AbstractEncoder):
     def encode_with_vision_transformer(self, img):
         if self.max_crops > 0:
            img = self.preprocess_by_cropping(img)
-        pil_img = to_pil_image(img[0]*0.5 + 0.5)
-        inputs = self.processor(images=pil_img, return_tensors="pt").to("cuda")
-        outputs = self.model_t(**inputs)
-        return outputs.image_embeds
-        # if img.dim() == 5:
-        #     assert self.max_crops == img.shape[1]
-        #     img = rearrange(img, "b n c h w -> (b n) c h w")
-        # img = self.preprocess(img)
-        # if not self.output_tokens:
-        #     assert not self.model.visual.output_tokens
-        #     x = self.model.visual(img)
-        #     tokens = None
-        # else:
-        #     assert self.model.visual.output_tokens
-        #     x, tokens = self.model.visual(img)
-        # if self.max_crops > 0:
-        #     x = rearrange(x, "(b n) d -> b n d", n=self.max_crops)
-        #     # drop out between 0 and all along the sequence axis
-        #     x = (
-        #         torch.bernoulli(
-        #             (1.0 - self.ucg_rate)
-        #             * torch.ones(x.shape[0], x.shape[1], 1, device=x.device)
-        #         )
-        #         * x
-        #     )
-        #     if tokens is not None:
-        #         tokens = rearrange(tokens, "(b n) t d -> b t (n d)", n=self.max_crops)
-        #         print(
-        #             f"You are running very experimental token-concat in {self.__class__.__name__}. "
-        #             f"Check what you are doing, and then remove this message."
-        #         )
-        # if self.output_tokens:
-        #     return x, tokens
-        # return x
+        # pil_img = to_pil_image(img[0]*0.5 + 0.5)
+        # inputs = self.processor(images=pil_img, return_tensors="pt").to("cuda")
+        # outputs = self.model_t(**inputs)
+        # return outputs.image_embeds
+        if img.dim() == 5:
+            assert self.max_crops == img.shape[1]
+            img = rearrange(img, "b n c h w -> (b n) c h w")
+        img = self.preprocess(img)
+        if not self.output_tokens:
+            assert not self.model.visual.output_tokens
+            x = self.model.visual(img)
+            tokens = None
+        else:
+            assert self.model.visual.output_tokens
+            x, tokens = self.model.visual(img)
+        if self.max_crops > 0:
+            x = rearrange(x, "(b n) d -> b n d", n=self.max_crops)
+            # drop out between 0 and all along the sequence axis
+            x = (
+                torch.bernoulli(
+                    (1.0 - self.ucg_rate)
+                    * torch.ones(x.shape[0], x.shape[1], 1, device=x.device)
+                )
+                * x
+            )
+            if tokens is not None:
+                tokens = rearrange(tokens, "(b n) t d -> b t (n d)", n=self.max_crops)
+                print(
+                    f"You are running very experimental token-concat in {self.__class__.__name__}. "
+                    f"Check what you are doing, and then remove this message."
+                )
+        if self.output_tokens:
+            return x, tokens
+        return x
 
     def encode(self, text):
         return self(text)
