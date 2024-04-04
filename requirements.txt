@@ -1,3 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch==2.0.0+cu117
+torchdata
+torchvision
 accelerate==0.28.0
 bitsandbytes==0.43.0
 transformers==4.39.3
@@ -22,9 +26,6 @@ scikit-image==0.20.0
 scikit-learn==1.2.2
 scipy==1.9.1
 seaborn==0.12.2
-torch==2.0.0
-torchdata==0.6.0
-torchvision==0.15.1
 modelscope==1.13.3
 tqdm==4.65.0
 xformers==0.0.19
