@@ -5,7 +5,7 @@ import argparse
 import datetime
 from pathlib import Path
 import torch
-import spaces
+# import spaces
 import gradio as gr
 import tempfile
 import yaml
@@ -54,7 +54,7 @@ inference_generator = torch.Generator(device="cuda")
 # -------------------------
 # ----- Functionality -----
 # -------------------------
-@spaces.GPU
+# @spaces.GPU
 def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance, where_to_log=result_fol):
     now = datetime.datetime.now()
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
