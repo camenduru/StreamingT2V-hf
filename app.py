@@ -5,6 +5,7 @@ import argparse
 import datetime
 from pathlib import Path
 import torch
+import spaces
 import gradio as gr
 import tempfile
 import yaml
@@ -40,7 +41,10 @@ cfg_v2v = {'downscale': 1, 'upscale_size': (1280, 720), 'model_id': 'damo/Video-
 # ----- Initialization -----
 # --------------------------
 ms_model = init_modelscope(device)
-# zs_model = init_zeroscope(device)
+# # zs_model = init_zeroscope(device)
+ad_model = init_animatediff(device)
+svd_model = init_svd(device)
+sdxl_model = init_sdxl(device)
 stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol)
 msxl_model = init_v2v_model(cfg_v2v)
 
@@ -50,7 +54,8 @@ inference_generator = torch.Generator(device="cuda")
 # -------------------------
 # ----- Functionality -----
 # -------------------------
-def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, n_prompt, seed, t, image_guidance, where_to_log=result_fol):
+@spaces.GPU
+def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance, where_to_log=result_fol):
     now = datetime.datetime.now()
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
 
@@ -59,18 +64,59 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, n_
     else:
         num_frames = int(num_frames.split(" ")[0])
 
-    n_autoreg_gen = num_frames/8-8
+    n_autoreg_gen = num_frames//8-8
 
     inference_generator.manual_seed(seed)
-    short_video = ms_short_gen(prompt, ms_model, inference_generator, t, device)
-    stream_long_gen(prompt, short_video, n_autoreg_gen, n_prompt, seed, t, image_guidance, name, stream_cli, stream_model)
+
+    if model_name_stage1 == "ModelScopeT2V (text to video)":
+        short_video = ms_short_gen(prompt, ms_model, inference_generator, t, device)
+    elif model_name_stage1 == "AnimateDiff (text to video)":
+        short_video = ad_short_gen(prompt, ad_model, inference_generator, t, device)
+    elif model_name_stage1 == "SVD (image to video)":
+        short_video = svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t, device)
+
+    stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, name, stream_cli, stream_model)
     video_path = opj(where_to_log, name+".mp4")
     return video_path
 
-def enhance(prompt, input_to_enhance):
+def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_stage1=None, model_name_stage2=None, seed=33, t=50, image_guidance=9.5, result_fol=result_fol):
+    if input_to_enhance is None:
+        input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
     encoded_video = video2video(prompt, input_to_enhance, result_fol, cfg_v2v, msxl_model)
     return encoded_video
 
+def change_visibility(value):
+    if value == "SVD (image to video)":
+        return gr.Image(label='Image Prompt (if not attached then SDXL will be used to generate the starting image)', show_label=True, scale=1, show_download_button=False, interactive=True, type='pil')
+    else:
+        return gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, type='pil')
+
+
+examples = [
+        ["Camera moving in a wide bright ice cave.",
+            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Explore the coral gardens of the sea: witness the kaleidoscope of colors and shapes as coral reefs provide shelter for a myriad of marine life.",
+            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Experience the dance of jellyfish: float through mesmerizing swarms of jellyfish, pulsating with otherworldly grace and beauty.",
+            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Discover the secret language of bees: delve into the complex communication system that allows bees to coordinate their actions and navigate the world.",
+            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["A beagle reading a paper.",
+            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Beautiful Paris Day and Night Hyperlapse.",
+            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Fishes swimming in ocean camera moving, cinematic.",
+            None, "24 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["A squirrel on a table full of big nuts.",
+            None, "24 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Ants, beetles and centipede nest.",
+            None, "24 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ]
+
+# examples = [
+#                 ["Fishes swimming in ocean camera moving, cinematic.",
+#                 None, "24 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+#             ]
 
 # --------------------------
 # ----- Gradio-Demo UI -----
@@ -117,30 +163,32 @@ with gr.Blocks() as demo:
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        num_frames = gr.Dropdown(["24", "32", "40", "48", "56", "80 - only on local", "240 - only on local", "600 - only on local", "1200 - only on local", "10000 - only on local"], label="Number of Video Frames: Default is 56", info="For >80 frames use local workstation!")
+                        num_frames = gr.Dropdown(["24 - frames", "32 - frames", "40 - frames", "48 - frames", "56 - frames", "80 - recommended to run on local GPUs", "240 - recommended to run on local GPUs", "600 - recommended to run on local GPUs", "1200 - recommended to run on local GPUs", "10000 - recommended to run on local GPUs"], label="Number of Video Frames", info="For >56 frames use local workstation!", value="24 - frames")
                     with gr.Row():
                         prompt_stage1 = gr.Textbox(label='Textual Prompt', placeholder="Ex: Dog running on the street.")
                     with gr.Row():
-                        image_stage1 = gr.Image(label='Image Prompt (only required for I2V base models)', show_label=True, scale=1, show_download_button=True)
+                        image_stage1 = gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, type='pil')
                 with gr.Column():
                     video_stage1 = gr.Video(label='Long Video Preview', show_label=True, interactive=False, scale=2, show_download_button=True)
             with gr.Row():
-                run_button_stage1 = gr.Button("Long Video Preview Generation")
+                with gr.Row():
+                    run_button_stage1 = gr.Button("long Video Generation (faster preview)")
+                with gr.Row():
+                    run_button_stage2 = gr.Button("long Video Generation")
 
             with gr.Row():
                 with gr.Column():
                     with gr.Accordion('Advanced options', open=False):
                         model_name_stage1 = gr.Dropdown(
-                            choices=["T2V: ModelScope", "T2V: ZeroScope", "I2V: AnimateDiff"],
-                            label="Base Model. Default is ModelScope",
-                            info="Currently supports only ModelScope. We will add more options later!",
+                            choices=["ModelScopeT2V (text to video)", "AnimateDiff (text to video)", "SVD (image to video)"],
+                            label="Base Model",
+                            value="ModelScopeT2V (text to video)"
                         )
                         model_name_stage2 = gr.Dropdown(
-                            choices=["ModelScope-XL", "Another", "Another"],
-                            label="Enhancement Model. Default is ModelScope-XL",
-                            info="Currently supports only ModelScope-XL. We will add more options later!",
+                            choices=["MS-Vid2Vid-XL"],
+                            label="Enhancement Model",
+                            value="MS-Vid2Vid-XL"
                         )
-                        n_prompt = gr.Textbox(label="Optional Negative Prompt", value='')
                         seed = gr.Slider(label='Seed', minimum=0, maximum=65536, value=33,step=1,)
 
                         t = gr.Slider(label="Timesteps", minimum=0, maximum=100, value=50, step=1,)
@@ -148,9 +196,25 @@ with gr.Blocks() as demo:
 
         with gr.Column():
             with gr.Row():
-                video_stage2 = gr.Video(label='Enhanced Long Video', show_label=True, interactive=False, height=473, show_download_button=True)
-            with gr.Row():
-                run_button_stage2 = gr.Button("Long Video Enhancement")
+                video_stage2 = gr.Video(label='Long Video', show_label=True, interactive=False, height=588, show_download_button=True)
+
+    model_name_stage1.change(fn=change_visibility, inputs=[model_name_stage1], outputs=image_stage1)
+
+    inputs_t2v = [prompt_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, seed, t, image_guidance]
+    run_button_stage1.click(fn=generate, inputs=inputs_t2v, outputs=video_stage1,)
+
+    inputs_v2v = [prompt_stage1, video_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, seed, t, image_guidance]
+
+    # gr.Examples(examples=examples,
+    #                 inputs=inputs_v2v,
+    #                 outputs=video_stage2,
+    #                 fn=enhance,
+    #                 run_on_click=False,
+    #                 # cache_examples=on_huggingspace,
+    #                 cache_examples=False,
+    #                 )
+    run_button_stage2.click(fn=enhance, inputs=inputs_v2v, outputs=video_stage2,)
+
     '''
     '''
     gr.HTML(
@@ -173,12 +237,6 @@ with gr.Blocks() as demo:
         </h3>
         </div>
         """)
-
-    inputs_t2v = [prompt_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, n_prompt, seed, t, image_guidance]
-    run_button_stage1.click(fn=generate, inputs=inputs_t2v, outputs=video_stage1,)
-
-    inputs_v2v = [prompt_stage1, video_stage1]
-    run_button_stage2.click(fn=enhance, inputs=inputs_v2v, outputs=video_stage2,)
 
 
 if on_huggingspace:

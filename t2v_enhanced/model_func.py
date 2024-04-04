@@ -51,12 +51,17 @@ def sdxl_image_gen(prompt, sdxl_model):
     return image
 
 def svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t=25, device="cuda"):
-    if image is None or image == "":
+    if image is None:
         image = sdxl_image_gen(prompt, sdxl_model)
         image = image.resize((576, 576))
         image = add_margin(image, 0, 224, 0, 224, (0, 0, 0))
-    else:
+    elif type(image) is str:
         image = load_image(image)
+        image = resize_and_keep(image)
+        image = center_crop(image)
+        image = add_margin(image, 0, 224, 0, 224, (0, 0, 0))
+    else:
+        image = Image.fromarray(np.uint8(image))
         image = resize_and_keep(image)
         image = center_crop(image)
         image = add_margin(image, 0, 224, 0, 224, (0, 0, 0))
@@ -70,9 +75,10 @@ def svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t=2
     return frames
 
 
-def stream_long_gen(prompt, short_video, n_autoreg_gen, n_prompt, seed, t, image_guidance, result_file_stem, stream_cli, stream_model):
+def stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, result_file_stem, stream_cli, stream_model):
     trainer = stream_cli.trainer
     trainer.limit_predict_batches = 1
+
     trainer.predict_cfg = {
         "predict_dir": stream_cli.config["result_fol"].as_posix(),
         "result_file_stem": result_file_stem,
@@ -93,7 +99,8 @@ def video2video(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True):
     pad = cfg_v2v['pad']
 
     now = datetime.datetime.now()
-    name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
+    now = str(now.time()).replace(":", "_").replace(".", "_")
+    name = prompt[:100].replace(" ", "_") + "_" + now
     enhanced_video_mp4 = opj(where_to_log, name+"_enhanced.mp4")
 
     video_frames = imageio.mimread(video)
@@ -107,11 +114,20 @@ def video2video(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True):
         video = [pad_to_fit(frame, upscale_size) for frame in video]
     # video = [np.array(frame) for frame in video]
 
-    imageio.mimsave(opj(where_to_log, 'temp.mp4'), video, fps=8)
+    imageio.mimsave(opj(where_to_log, 'temp_'+now+'.mp4'), video, fps=8)
 
     p_input = {
-        'video_path': opj(where_to_log, 'temp.mp4'),
+        'video_path': opj(where_to_log, 'temp_'+now+'.mp4'),
         'text': prompt
     }
     output_video_path = model_v2v(p_input, output_video=enhanced_video_mp4)[OutputKeys.OUTPUT_VIDEO]
+
+    # Remove padding
+    video_frames = imageio.mimread(enhanced_video_mp4)
+    video_frames_square = []
+    for frame in video_frames:
+        frame = frame[:, 280:-280, :]
+        video_frames_square.append(frame)
+    imageio.mimsave(enhanced_video_mp4, video_frames_square)
+
     return enhanced_video_mp4
