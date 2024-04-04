@@ -72,7 +72,7 @@ class FrozenOpenCLIPImageEmbedder(AbstractEncoder):
         output_tokens=False,
     ):
         super().__init__()
-        model, _, _ = open_clip.create_model_and_transforms(
+        model, _, _ = create_model_and_transforms(
             arch,
             device=torch.device("cpu"),
             pretrained=version,
