@@ -1,13 +1,13 @@
 ---
 title: StreamingT2V
 emoji: 🔥
-colorFrom: blue
-colorTo: purple
+colorFrom: purple
+colorTo: blue
 sdk: gradio
 sdk_version: 4.25.0
 app_file: app.py
 pinned: false
-short_description: Consistent, Dynamic, and Extendable Long Video Generation fr
+short_description: Consistent, Dynamic, and Extendable Long Video Generation
 ---
 
 
@@ -110,5 +110,3 @@ If you use our work in your research, please cite our publication:
   year={2024}
 }
 ```
-
-
