@@ -1,10 +1,11 @@
+import torch
+torch.jit.script = lambda f: f
 # General
 import os
 from os.path import join as opj
 import argparse
 import datetime
 from pathlib import Path
-import torch
 # import spaces
 import gradio as gr
 import tempfile
