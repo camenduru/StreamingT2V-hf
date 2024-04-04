@@ -34,7 +34,6 @@ device = args.device
 # --------------------------
 # ----- Configurations -----
 # --------------------------
-ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").absolute()
 cfg_v2v = {'downscale': 1, 'upscale_size': (1280, 720), 'model_id': 'damo/Video-to-Video', 'pad': True}
 
 
@@ -46,6 +45,8 @@ ms_model = init_modelscope(device)
 ad_model = init_animatediff(device)
 svd_model = init_svd(device)
 sdxl_model = init_sdxl(device)
+
+ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").absolute()
 stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol)
 msxl_model = init_v2v_model(cfg_v2v)
 
