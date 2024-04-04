@@ -28,7 +28,7 @@ torchvision==0.15.1
 modelscope==1.13.3
 tqdm==4.65.0
 xformers==0.0.19
-open-clip-torch==2.24.0
+# open-clip-torch==2.24.0
 jsonargparse[signatures]==4.27.7
 fairscale==0.4.13
 rotary-embedding-torch==0.5.3
