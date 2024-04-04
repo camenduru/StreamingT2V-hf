@@ -13,8 +13,8 @@ from diffusers import StableVideoDiffusionPipeline, AutoPipelineForText2Image
 import tempfile
 import yaml
 from t2v_enhanced.model.video_ldm import VideoLDM
-from model.callbacks import SaveConfigCallback
-from inference_utils import legacy_transformation, remove_value, CustomCLI
+from t2v_enhanced.model.callbacks import SaveConfigCallback
+from t2v_enhanced.inference_utils import legacy_transformation, remove_value, CustomCLI
 
 # For Stage-3
 from modelscope.pipelines import pipeline
@@ -67,7 +67,7 @@ def init_svd(device="cuda"):
 
 # Initialize StreamingT2V model.
 def init_streamingt2v_model(ckpt_file, result_fol):
-    config_file = "configs/text_to_video/config.yaml"
+    config_file = "t2v_enhanced/configs/text_to_video/config.yaml"
     sys.argv = sys.argv[:1]
     with tempfile.TemporaryDirectory() as tmpdirname:
         storage_fol = Path(tmpdirname)
@@ -86,7 +86,7 @@ def init_streamingt2v_model(ckpt_file, result_fol):
         sys.argv.append("--result_fol")
         sys.argv.append(result_fol.as_posix())
         sys.argv.append("--config")
-        sys.argv.append("configs/inference/inference_long_video.yaml")
+        sys.argv.append("t2v_enhanced/configs/inference/inference_long_video.yaml")
         sys.argv.append("--data.prompt_cfg.type=prompt")
         sys.argv.append(f"--data.prompt_cfg.content='test prompt for initialization'")
         sys.argv.append("--trainer.devices=1")

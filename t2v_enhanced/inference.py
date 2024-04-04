@@ -11,9 +11,9 @@ import yaml
 from t2v_enhanced.model.video_ldm import VideoLDM
 
 # Utilities
-from inference_utils import *
-from model_init import *
-from model_func import *
+from t2v_enhanced.inference_utils import *
+from t2v_enhanced.model_init import *
+from t2v_enhanced.model_func import *
 
 
 if __name__ == "__main__":

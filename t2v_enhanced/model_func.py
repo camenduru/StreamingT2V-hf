@@ -6,7 +6,7 @@ import torch
 from einops import rearrange, repeat
 
 # Utilities
-from inference_utils import *
+from t2v_enhanced.inference_utils import *
 
 from modelscope.outputs import OutputKeys
 import imageio
