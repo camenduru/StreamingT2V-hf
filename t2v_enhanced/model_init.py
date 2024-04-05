@@ -106,7 +106,18 @@ def init_streamingt2v_model(ckpt_file, result_fol):
 
 
 # Initialize Stage-3 model.
-def init_v2v_model(cfg):
+def init_v2v_model(cfg, device):
     model_id = cfg['model_id']
-    pipe_enhance = pipeline(task="video-to-video", model=model_id, model_revision='v1.1.0', device='cuda')
+    pipe_enhance = pipeline(task="video-to-video", model=model_id, model_revision='v1.1.0', device='cpu')
+    pipe_enhance.device = device
+
+    pipe_enhance.model = pipe_enhance.model.to(device)
+    pipe_enhance.model.device = device
+    
+    pipe_enhance.model.clip_encoder.model = pipe_enhance.model.clip_encoder.model.to(device)
+    pipe_enhance.model.clip_encoder.device = device
+
+    pipe_enhance.model.autoencoder = pipe_enhance.model.autoencoder.to(device)
+    pipe_enhance.model.generator = pipe_enhance.model.generator.to(device)
+    pipe_enhance.model.negative_y = pipe_enhance.model.negative_y.to(device)
     return pipe_enhance
