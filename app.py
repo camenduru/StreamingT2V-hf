@@ -214,7 +214,7 @@ with gr.Blocks() as demo:
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=True,
+                    cache_examples=False,
                     preprocess=False,
                     postprocess=True,
                 )
@@ -224,7 +224,7 @@ with gr.Blocks() as demo:
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=True,
+                    cache_examples=False,
                     preprocess=False,
                     postprocess=True,
                 )
