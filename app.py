@@ -56,7 +56,7 @@ msxl_model = init_v2v_model(cfg_v2v)
 # -------------------------
 # ----- Functionality -----
 # -------------------------
-@spaces.GPU(duration=420)
+@spaces.GPU(duration=120)
 def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance, where_to_log=result_fol):
     now = datetime.datetime.now()
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
