@@ -101,7 +101,7 @@ def init_streamingt2v_model(ckpt_file, result_fol):
 
         model = cli.model
         model.load_state_dict(torch.load(
-            cli.config["ckpt"].as_posix())["state_dict"])
+            cli.config["ckpt"].as_posix(), map_location=torch.device('cpu'))["state_dict"], strict=False)
     return cli, model
 
 
