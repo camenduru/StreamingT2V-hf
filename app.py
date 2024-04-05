@@ -62,11 +62,13 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
 
     if num_frames == [] or num_frames is None:
-        num_frames = 56
+        num_frames = 24
     else:
         num_frames = int(num_frames.split(" ")[0])
+        if num_frames > 56:
+            num_frames = 56
 
-    n_autoreg_gen = num_frames//8-8
+    n_autoreg_gen = (num_frames-8)//8
 
     inference_generator = torch.Generator(device="cuda").manual_seed(seed)
 
@@ -75,6 +77,9 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     elif model_name_stage1 == "AnimateDiff (text to video)":
         short_video = ad_short_gen(prompt, ad_model, inference_generator, t, device)
     elif model_name_stage1 == "SVD (image to video)":
+        # For cached examples
+        if isinstance(image, dict):
+            image = image["path"]
         short_video = svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t, device)
 
     stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, name, stream_cli, stream_model)
@@ -89,36 +94,32 @@ def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_st
 
 def change_visibility(value):
     if value == "SVD (image to video)":
-        return gr.Image(label='Image Prompt (if not attached then SDXL will be used to generate the starting image)', show_label=True, scale=1, show_download_button=False, interactive=True, type='pil')
+        return gr.Image(label='Image Prompt (if not attached then SDXL will be used to generate the starting image)', show_label=True, scale=1, show_download_button=False, interactive=True, value=None)
     else:
-        return gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, type='pil')
+        return gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, value=None)
 
 
-examples = [
-        ["Camera moving in a wide bright ice cave.",
-            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-        ["Explore the coral gardens of the sea: witness the kaleidoscope of colors and shapes as coral reefs provide shelter for a myriad of marine life.",
-            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+examples_1 = [
         ["Experience the dance of jellyfish: float through mesmerizing swarms of jellyfish, pulsating with otherworldly grace and beauty.",
-            None, "24 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["People dancing in room filled with fog and colorful lights.",
+            None, "56 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
         ["Discover the secret language of bees: delve into the complex communication system that allows bees to coordinate their actions and navigate the world.",
-            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-        ["A beagle reading a paper.",
-            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-        ["Beautiful Paris Day and Night Hyperlapse.",
-            None, "24 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-        ["Fishes swimming in ocean camera moving, cinematic.",
-            None, "24 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-        ["A squirrel on a table full of big nuts.",
-            None, "24 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["sunset, orange sky, warm lighting, fishing boats, ocean waves seagulls, rippling water, wharf, silhouette, serene atmosphere, dusk, evening glow, coastal landscape, seaside scenery.",
+            None, "56 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["Dive into the depths of the ocean: explore vibrant coral reefs, mysterious underwater caves, and the mesmerizing creatures that call the sea home.",
+            None, "56 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
         ["Ants, beetles and centipede nest.",
-            None, "24 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
         ]
 
-# examples = [
-#                 ["Fishes swimming in ocean camera moving, cinematic.",
-#                 None, "24 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
-#             ]
+examples_2 = [
+        ["Fishes swimming in ocean camera moving, cinematic.",
+            None, "56 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ["A squirrel on a table full of big nuts.",
+            None, "56 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+        ]
 
 # --------------------------
 # ----- Gradio-Demo UI -----
@@ -169,7 +170,7 @@ with gr.Blocks() as demo:
                     with gr.Row():
                         prompt_stage1 = gr.Textbox(label='Textual Prompt', placeholder="Ex: Dog running on the street.")
                     with gr.Row():
-                        image_stage1 = gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, type='pil')
+                        image_stage1 = gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False)
                 with gr.Column():
                     video_stage1 = gr.Video(label='Long Video Preview', show_label=True, interactive=False, scale=2, show_download_button=True)
             with gr.Row():
@@ -207,14 +208,26 @@ with gr.Blocks() as demo:
 
     inputs_v2v = [prompt_stage1, video_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, seed, t, image_guidance]
 
-    # gr.Examples(examples=examples,
-    #                 inputs=inputs_v2v,
-    #                 outputs=video_stage2,
-    #                 fn=enhance,
-    #                 run_on_click=False,
-    #                 # cache_examples=on_huggingspace,
-    #                 cache_examples=False,
-    #                 )
+    gr.Examples(examples=examples_1,
+                inputs=inputs_v2v,
+                    outputs=[video_stage2],
+                    fn=enhance,
+                    run_on_click=False,
+                    cache_examples=True,
+                    preprocess=False,
+                    postprocess=True,
+                )
+
+    gr.Examples(examples=examples_2,
+                inputs=inputs_v2v,
+                    outputs=[video_stage2],
+                    fn=enhance,
+                    run_on_click=False,
+                    cache_examples=True,
+                    preprocess=False,
+                    postprocess=True,
+                )
+    
     run_button_stage2.click(fn=enhance, inputs=inputs_v2v, outputs=video_stage2,)
 
     '''
@@ -245,5 +258,4 @@ if on_huggingspace:
     demo.queue(max_size=20)
     demo.launch(debug=True)
 else:
-    _, _, link = demo.queue(api_open=False).launch(share=args.public_access)
-    print(link)
+    demo.queue(api_open=False).launch(share=args.public_access)
