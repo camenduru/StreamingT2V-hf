@@ -6,7 +6,7 @@ from os.path import join as opj
 import argparse
 import datetime
 from pathlib import Path
-# import spaces
+import spaces
 import gradio as gr
 import tempfile
 import yaml
@@ -29,7 +29,6 @@ args = parser.parse_args()
 Path(args.where_to_log).mkdir(parents=True, exist_ok=True)
 result_fol = Path(args.where_to_log).absolute()
 device = args.device
-device_cpu = "cpu"
 
 
 # --------------------------
@@ -41,10 +40,10 @@ cfg_v2v = {'downscale': 1, 'upscale_size': (1280, 720), 'model_id': 'damo/Video-
 # --------------------------
 # ----- Initialization -----
 # --------------------------
-ms_model = init_modelscope(device_cpu)
+ms_model = init_modelscope(device)
 # # zs_model = init_zeroscope(device)
-ad_model = init_animatediff(device_cpu)
-svd_model = init_svd(device_cpu)
+ad_model = init_animatediff(device)
+svd_model = init_svd(device)
 sdxl_model = init_sdxl(device)
 
 ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").absolute()
@@ -57,7 +56,7 @@ msxl_model = init_v2v_model(cfg_v2v)
 # -------------------------
 # ----- Functionality -----
 # -------------------------
-# @spaces.GPU(duration=120)
+@spaces.GPU(duration=120)
 def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance, where_to_log=result_fol):
     now = datetime.datetime.now()
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
@@ -74,26 +73,20 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     inference_generator = torch.Generator(device="cuda").manual_seed(seed)
 
     if model_name_stage1 == "ModelScopeT2V (text to video)":
-        ms_model.to(device)
         short_video = ms_short_gen(prompt, ms_model, inference_generator, t, device)
-        ms_model.to(device_cpu)
     elif model_name_stage1 == "AnimateDiff (text to video)":
-        ad_model.to(device)
         short_video = ad_short_gen(prompt, ad_model, inference_generator, t, device)
-        ad_model.to(device_cpu)
     elif model_name_stage1 == "SVD (image to video)":
         # For cached examples
         if isinstance(image, dict):
             image = image["path"]
-        svd_model.to(device)
         short_video = svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t, device)
-        svd_model.to(device_cpu)
 
     stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, name, stream_cli, stream_model)
     video_path = opj(where_to_log, name+".mp4")
     return video_path
 
-# @spaces.GPU(duration=300)
+@spaces.GPU(duration=400)
 def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_stage1=None, model_name_stage2=None, seed=33, t=50, image_guidance=9.5, result_fol=result_fol):
     if input_to_enhance is None:
         input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
