@@ -1,5 +1,5 @@
 import torch
-# torch.jit.script = lambda f: f
+torch.jit.script = lambda f: f
 # General
 import os
 from os.path import join as opj
@@ -176,9 +176,9 @@ with gr.Blocks() as demo:
                     video_stage1 = gr.Video(label='Long Video Preview', show_label=True, interactive=False, scale=2, show_download_button=True)
             with gr.Row():
                 with gr.Row():
-                    run_button_stage1 = gr.Button("long Video Generation (faster preview)")
+                    run_button_stage1 = gr.Button("Long Video Generation (faster preview)")
                 with gr.Row():
-                    run_button_stage2 = gr.Button("long Video Generation")
+                    run_button_stage2 = gr.Button("Long Video Generation")
 
             with gr.Row():
                 with gr.Column():
