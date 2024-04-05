@@ -144,6 +144,7 @@ with gr.Blocks() as demo:
         <h2 style="font-weight: 450; font-size: 1rem; margin: 0rem">
         [<a href="https://arxiv.org/abs/2403.14773" style="color:blue;">arXiv</a>] 
         [<a href="https://github.com/Picsart-AI-Research/StreamingT2V" style="color:blue;">GitHub</a>]
+        [<a href="https://streamingt2v.github.io/" style="color:blue;">Project page</a>]
         </h2>
         <h2 style="font-weight: 450; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.5rem">
         <b>StreamingT2V</b> is an advanced autoregressive technique that enables the creation of long videos featuring rich motion dynamics without any stagnation. 
