@@ -1,5 +1,5 @@
 import torch
-torch.jit.script = lambda f: f
+# torch.jit.script = lambda f: f
 # General
 import os
 from os.path import join as opj
