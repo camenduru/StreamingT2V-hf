@@ -102,24 +102,24 @@ def change_visibility(value):
 
 examples_1 = [
         ["Experience the dance of jellyfish: float through mesmerizing swarms of jellyfish, pulsating with otherworldly grace and beauty.",
-            None, "56 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "ModelScopeT2V (text to video)", None, 33, 50, 9.0],
         ["People dancing in room filled with fog and colorful lights.",
-            None, "56 - frames", None, "ModelScopeT2V (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "ModelScopeT2V (text to video)", None, 33, 50, 9.0],
         ["Discover the secret language of bees: delve into the complex communication system that allows bees to coordinate their actions and navigate the world.",
-            None, "56 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "AnimateDiff (text to video)", None, 33, 50, 9.0],
         ["sunset, orange sky, warm lighting, fishing boats, ocean waves seagulls, rippling water, wharf, silhouette, serene atmosphere, dusk, evening glow, coastal landscape, seaside scenery.",
-            None, "56 - frames", None, "AnimateDiff (text to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "AnimateDiff (text to video)", None, 33, 50, 9.0],
         ["Dive into the depths of the ocean: explore vibrant coral reefs, mysterious underwater caves, and the mesmerizing creatures that call the sea home.",
-            None, "56 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "SVD (image to video)", None, 33, 50, 9.0],
         ["Ants, beetles and centipede nest.",
-            None, "56 - frames", None, "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", None, "SVD (image to video)", None, 33, 50, 9.0],
         ]
 
 examples_2 = [
         ["Fishes swimming in ocean camera moving, cinematic.",
-            None, "56 - frames", "__assets__/fish.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", "__assets__/fish.jpg", "SVD (image to video)", None, 33, 50, 9.0],
         ["A squirrel on a table full of big nuts.",
-            None, "56 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", "MS-Vid2Vid-XL", 33, 50, 9.0],
+            None, "56 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", None, 33, 50, 9.0],
         ]
 
 # --------------------------
@@ -210,14 +210,21 @@ with gr.Blocks() as demo:
 
     inputs_v2v = [prompt_stage1, video_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, seed, t, image_guidance]
 
+    gr.HTML("""
+        <h2>
+            You can check the inference time for different number of frames
+            <p style=" display: inline">
+                <a href="https://github.com/Picsart-AI-Research/StreamingT2V/blob/main/README.md#inference" style="color:blue;" target="_blank">[here].</a> 
+            </p>
+        </h2>
+        """)
+
     gr.Examples(examples=examples_1,
                 inputs=inputs_v2v,
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=False,
-                    preprocess=False,
-                    postprocess=True,
+                    cache_examples=True,
                 )
 
     gr.Examples(examples=examples_2,
@@ -225,7 +232,7 @@ with gr.Blocks() as demo:
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=False,
+                    cache_examples=True,
                     preprocess=False,
                     postprocess=True,
                 )
