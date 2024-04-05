@@ -50,7 +50,7 @@ ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").ab
 stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol)
 msxl_model = init_v2v_model(cfg_v2v)
 
-inference_generator = torch.Generator(device="cuda")
+
 
 
 # -------------------------
@@ -68,7 +68,7 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
 
     n_autoreg_gen = num_frames//8-8
 
-    inference_generator.manual_seed(seed)
+    inference_generator = torch.Generator(device="cuda").manual_seed(seed)
 
     if model_name_stage1 == "ModelScopeT2V (text to video)":
         short_video = ms_short_gen(prompt, ms_model, inference_generator, t, device)
