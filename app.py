@@ -29,6 +29,7 @@ args = parser.parse_args()
 Path(args.where_to_log).mkdir(parents=True, exist_ok=True)
 result_fol = Path(args.where_to_log).absolute()
 device = args.device
+device_cpu = "cpu"
 
 
 # --------------------------
@@ -40,10 +41,10 @@ cfg_v2v = {'downscale': 1, 'upscale_size': (1280, 720), 'model_id': 'damo/Video-
 # --------------------------
 # ----- Initialization -----
 # --------------------------
-ms_model = init_modelscope(device)
+ms_model = init_modelscope(device_cpu)
 # # zs_model = init_zeroscope(device)
-ad_model = init_animatediff(device)
-svd_model = init_svd(device)
+ad_model = init_animatediff(device_cpu)
+svd_model = init_svd(device_cpu)
 sdxl_model = init_sdxl(device)
 
 ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").absolute()
@@ -73,14 +74,20 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     inference_generator = torch.Generator(device="cuda").manual_seed(seed)
 
     if model_name_stage1 == "ModelScopeT2V (text to video)":
+        ms_model.to(device)
         short_video = ms_short_gen(prompt, ms_model, inference_generator, t, device)
+        ms_model.to(device_cpu)
     elif model_name_stage1 == "AnimateDiff (text to video)":
+        ad_model.to(device)
         short_video = ad_short_gen(prompt, ad_model, inference_generator, t, device)
+        ad_model.to(device_cpu)
     elif model_name_stage1 == "SVD (image to video)":
         # For cached examples
         if isinstance(image, dict):
             image = image["path"]
+        svd_model.to(device)
         short_video = svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t, device)
+        svd_model.to(device_cpu)
 
     stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, name, stream_cli, stream_model)
     video_path = opj(where_to_log, name+".mp4")
