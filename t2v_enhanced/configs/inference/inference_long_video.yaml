@@ -6,7 +6,7 @@ model:
     class_path: t2v_enhanced.model.pl_module_params_controlnet.InferenceParams
     init_args:
       num_inference_steps: 50  # number of inference steps
-      frame_rate: 3
+      frame_rate: 8
       eta: 1.0   # eta used for DDIM sampler
       guidance_scale: 7.5     # classifier free guidance scale
       conditioning_type: fixed
