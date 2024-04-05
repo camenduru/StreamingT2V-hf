@@ -15,5 +15,4 @@ t2v_enhanced/slurm_logs
 t2v_enhanced/lightning_logs
 t2v_enhanced/results
 t2v_enhanced/gradio_output
-gradio_output/*
 lightning_logs/
