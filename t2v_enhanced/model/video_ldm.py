@@ -214,7 +214,8 @@ class VideoLDM(pl.LightningModule):
 
         inference_params: pl_module_params_controlnet.InferenceParams = self.inference_params
         conditioning_type = inference_params.conditioning_type
-        n_autoregressive_generations = inference_params.n_autoregressive_generations
+        # n_autoregressive_generations = inference_params.n_autoregressive_generations
+        n_autoregressive_generations = cfg["n_autoregressive_generations"]
         mode = inference_params.mode
         start_from_real_input = inference_params.start_from_real_input
         assert isinstance(prompts, list)
@@ -302,7 +303,7 @@ class VideoLDM(pl.LightningModule):
 
     def forward(self, prompt, input_frames=None, input_frames_conditioning=None, latents=None):
         call_params = self.inference_params.to_dict()
-        print(f"INFERENCE PARAMS = {call_params}")
+        # print(f"INFERENCE PARAMS = {call_params}")
         call_params["prompt"] = prompt
 
         call_params["image"] = input_frames
