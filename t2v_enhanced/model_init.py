@@ -89,6 +89,7 @@ def init_streamingt2v_model(ckpt_file, result_fol):
         sys.argv.append("t2v_enhanced/configs/inference/inference_long_video.yaml")
         sys.argv.append("--data.prompt_cfg.type=prompt")
         sys.argv.append(f"--data.prompt_cfg.content='test prompt for initialization'")
+        sys.argv.append("--trainer.accelerator=cpu")
         sys.argv.append("--trainer.devices=1")
         sys.argv.append("--trainer.num_nodes=1")
         sys.argv.append(f"--model.inference_params.num_inference_steps=50")
