@@ -224,7 +224,7 @@ with gr.Blocks() as demo:
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=True,
+                    cache_examples=False,
                 )
 
     gr.Examples(examples=examples_2,
@@ -232,9 +232,9 @@ with gr.Blocks() as demo:
                     outputs=[video_stage2],
                     fn=enhance,
                     run_on_click=False,
-                    cache_examples=True,
-                    preprocess=False,
-                    postprocess=True,
+                    cache_examples=False,
+                    # preprocess=False,
+                    # postprocess=True,
                 )
     
     run_button_stage2.click(fn=enhance, inputs=inputs_v2v, outputs=video_stage2,)
