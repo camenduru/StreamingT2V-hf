@@ -86,7 +86,7 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     video_path = opj(where_to_log, name+".mp4")
     return video_path
 
-@spaces.GPU(duration=360)
+@spaces.GPU(duration=300)
 def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_stage1=None, model_name_stage2=None, seed=33, t=50, image_guidance=9.5, result_fol=result_fol):
     if input_to_enhance is None:
         input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
