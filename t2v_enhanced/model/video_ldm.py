@@ -303,7 +303,7 @@ class VideoLDM(pl.LightningModule):
 
     def forward(self, prompt, input_frames=None, input_frames_conditioning=None, latents=None):
         call_params = self.inference_params.to_dict()
-        # print(f"INFERENCE PARAMS = {call_params}")
+        print(f"INFERENCE PARAMS = {call_params}")
         call_params["prompt"] = prompt
 
         call_params["image"] = input_frames
