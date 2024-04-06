@@ -1,12 +1,12 @@
 import torch
-# torch.jit.script = lambda f: f
+torch.jit.script = lambda f: f
 # General
 import os
 from os.path import join as opj
 import argparse
 import datetime
 from pathlib import Path
-# import spaces
+import spaces
 import gradio as gr
 import tempfile
 import yaml
@@ -59,7 +59,7 @@ msxl_model = init_v2v_model(cfg_v2v, devices[3])
 # -------------------------
 # ----- Functionality -----
 # -------------------------
-# @spaces.GPU(duration=120)
+@spaces.GPU(duration=120)
 def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance, where_to_log=result_fol):
     now = datetime.datetime.now()
     name = prompt[:100].replace(" ", "_") + "_" + str(now.time()).replace(":", "_").replace(".", "_")
@@ -89,7 +89,7 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
     video_path = opj(where_to_log, name+".mp4")
     return video_path
 
-# @spaces.GPU(duration=400)
+@spaces.GPU(duration=400)
 def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_stage1=None, model_name_stage2=None, seed=33, t=50, image_guidance=9.5, result_fol=result_fol):
     if input_to_enhance is None:
         input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
@@ -105,26 +105,27 @@ def change_visibility(value):
         return gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False, value=None)
 
 
+# [prompt_stage1, video_stage2, num_frames, image_stage1, model_name_stage1, seed, t, image_guidance]
 examples_1 = [
         ["Experience the dance of jellyfish: float through mesmerizing swarms of jellyfish, pulsating with otherworldly grace and beauty.",
-            None, "56 - frames", None, "ModelScopeT2V (text to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/1.mp4", "56 - frames", None, "ModelScopeT2V (text to video)", 33, 50, 9.0],
         ["People dancing in room filled with fog and colorful lights.",
-            None, "56 - frames", None, "ModelScopeT2V (text to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/2.mp4", "56 - frames", None, "ModelScopeT2V (text to video)", 33, 50, 9.0],
         ["Discover the secret language of bees: delve into the complex communication system that allows bees to coordinate their actions and navigate the world.",
-            None, "56 - frames", None, "AnimateDiff (text to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/3.mp4", "56 - frames", None, "AnimateDiff (text to video)", 33, 50, 9.0],
         ["sunset, orange sky, warm lighting, fishing boats, ocean waves seagulls, rippling water, wharf, silhouette, serene atmosphere, dusk, evening glow, coastal landscape, seaside scenery.",
-            None, "56 - frames", None, "AnimateDiff (text to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/4.mp4", "56 - frames", None, "AnimateDiff (text to video)", 33, 50, 9.0],
         ["Dive into the depths of the ocean: explore vibrant coral reefs, mysterious underwater caves, and the mesmerizing creatures that call the sea home.",
-            None, "56 - frames", None, "SVD (image to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/5.mp4", "56 - frames", None, "SVD (image to video)", 33, 50, 9.0],
         ["Ants, beetles and centipede nest.",
-            None, "56 - frames", None, "SVD (image to video)", None, 33, 50, 9.0],
+            "__assets__/examples/t2v/6.mp4", "56 - frames", None, "SVD (image to video)", 33, 50, 9.0],
         ]
 
 examples_2 = [
         ["Fishes swimming in ocean camera moving, cinematic.",
-            None, "56 - frames", "__assets__/fish.jpg", "SVD (image to video)", None, 33, 50, 9.0],
+            "__assets__/examples/i2v/1.mp4", "56 - frames", "__assets__/fish.jpg", "SVD (image to video)", 33, 50, 9.0],
         ["A squirrel on a table full of big nuts.",
-            None, "56 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", None, 33, 50, 9.0],
+            "__assets__/examples/i2v/2.mp4", "56 - frames", "__assets__/squirrel.jpg", "SVD (image to video)", 33, 50, 9.0],
         ]
 
 # --------------------------
@@ -215,6 +216,8 @@ with gr.Blocks() as demo:
 
     inputs_v2v = [prompt_stage1, video_stage1, num_frames, image_stage1, model_name_stage1, model_name_stage2, seed, t, image_guidance]
 
+    inputs_examples = [prompt_stage1, video_stage2, num_frames, image_stage1, model_name_stage1, seed, t, image_guidance]
+
     gr.HTML("""
         <h2>
             You can check the inference time for different number of frames
@@ -225,21 +228,21 @@ with gr.Blocks() as demo:
         """)
 
     gr.Examples(examples=examples_1,
-                inputs=inputs_v2v,
-                    outputs=[video_stage2],
-                    fn=enhance,
-                    run_on_click=False,
-                    cache_examples=False,
+                inputs=inputs_examples,
+                # outputs=[video_stage2],
+                # fn=enhance,
+                # run_on_click=False,
+                # cache_examples=False,
                 )
 
     gr.Examples(examples=examples_2,
-                inputs=inputs_v2v,
-                    outputs=[video_stage2],
-                    fn=enhance,
-                    run_on_click=False,
-                    cache_examples=False,
-                    # preprocess=False,
-                    # postprocess=True,
+                inputs=inputs_examples,
+                # outputs=[video_stage2],
+                # fn=enhance,
+                # run_on_click=False,
+                # cache_examples=False,
+                # # preprocess=False,
+                # # postprocess=True,
                 )
     
     run_button_stage2.click(fn=enhance, inputs=inputs_v2v, outputs=video_stage2,)
