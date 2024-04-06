@@ -66,7 +66,7 @@ def svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t=2
         image = center_crop(image)
         image = add_margin(image, 0, 224, 0, 224, (0, 0, 0))
 
-    frames = svd_model(image, decode_chunk_size=8, generator=inference_generator).frames[0]
+    frames = svd_model(image, decode_chunk_size=4, generator=inference_generator).frames[0]
     frames = torch.stack([transform(frame) for frame in frames])
     frames = frames.to(device).to(torch.float32)
     frames = frames[:16,:,:,224:-224]

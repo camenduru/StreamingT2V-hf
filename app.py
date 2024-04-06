@@ -29,8 +29,11 @@ args = parser.parse_args()
 Path(args.where_to_log).mkdir(parents=True, exist_ok=True)
 result_fol = Path(args.where_to_log).absolute()
 device = args.device
-
-
+n_devices = int(os.environ.get('NDEVICES', 4))
+if n_devices == 4:
+    devices = [f"cuda:{idx}" for idx in range(4)]
+else:
+    devices = ["cuda"] * 4
 # --------------------------
 # ----- Configurations -----
 # --------------------------
@@ -40,15 +43,15 @@ cfg_v2v = {'downscale': 1, 'upscale_size': (1280, 720), 'model_id': 'damo/Video-
 # --------------------------
 # ----- Initialization -----
 # --------------------------
-ms_model = init_modelscope(device)
+ms_model = init_modelscope(devices[1])
 # # zs_model = init_zeroscope(device)
-ad_model = init_animatediff(device)
-svd_model = init_svd(device)
-sdxl_model = init_sdxl(device)
+ad_model = init_animatediff(devices[1])
+svd_model = init_svd(devices[2])
+sdxl_model = init_sdxl(devices[2])
 
 ckpt_file_streaming_t2v = Path("t2v_enhanced/checkpoints/streaming_t2v.ckpt").absolute()
 stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol)
-msxl_model = init_v2v_model(cfg_v2v, device)
+msxl_model = init_v2v_model(cfg_v2v, devices[3])
 
 
 
@@ -91,6 +94,8 @@ def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_st
     if input_to_enhance is None:
         input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
     encoded_video = video2video(prompt, input_to_enhance, result_fol, cfg_v2v, msxl_model)
+    # for idx in range(4):
+    #     print(f">>> cuda:{idx}", torch.cuda.max_memory_allocated(f"cuda:{idx}"))
     return encoded_video
 
 def change_visibility(value):
