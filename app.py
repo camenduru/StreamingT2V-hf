@@ -222,7 +222,7 @@ with gr.Blocks() as demo:
         <h2>
             You can check the inference time for different number of frames
             <p style=" display: inline">
-                <a href="https://github.com/Picsart-AI-Research/StreamingT2V/blob/main/README.md#inference" style="color:blue;" target="_blank">[here].</a> 
+                <a href="https://github.com/Picsart-AI-Research/StreamingT2V/blob/main/README.md#inference-time" style="color:blue;" target="_blank">[here].</a> 
             </p>
         </h2>
         """)
