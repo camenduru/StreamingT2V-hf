@@ -24,7 +24,7 @@ parser.add_argument('--public_access', action='store_true', default=True)
 parser.add_argument('--where_to_log', type=str, default="gradio_output")
 parser.add_argument('--device', type=str, default="cuda")
 args = parser.parse_args()
-
+default_prompt = "A man with yellow ballon head is riding a bike on the street of New York City"
 
 Path(args.where_to_log).mkdir(parents=True, exist_ok=True)
 result_fol = Path(args.where_to_log).absolute()
@@ -70,6 +70,9 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
         num_frames = int(num_frames.split(" ")[0])
         if num_frames > 56:
             num_frames = 56
+    
+    if prompt == "" or prompt is None:
+        prompt = default_prompt
 
     n_autoreg_gen = (num_frames-8)//8
 
@@ -91,6 +94,9 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
 
 # @spaces.GPU(duration=400)
 def enhance(prompt, input_to_enhance, num_frames=None, image=None, model_name_stage1=None, model_name_stage2=None, seed=33, t=50, image_guidance=9.5, result_fol=result_fol):
+    if prompt == "" or prompt is None:
+        prompt = default_prompt
+    
     if input_to_enhance is None:
         input_to_enhance = generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, seed, t, image_guidance)
     encoded_video = video2video(prompt, input_to_enhance, result_fol, cfg_v2v, msxl_model)
@@ -176,7 +182,7 @@ with gr.Blocks() as demo:
                     with gr.Row():
                         num_frames = gr.Dropdown(["24 - frames", "32 - frames", "40 - frames", "48 - frames", "56 - frames", "80 - recommended to run on local GPUs", "240 - recommended to run on local GPUs", "600 - recommended to run on local GPUs", "1200 - recommended to run on local GPUs", "10000 - recommended to run on local GPUs"], label="Number of Video Frames", info="For >56 frames use local workstation!", value="24 - frames")
                     with gr.Row():
-                        prompt_stage1 = gr.Textbox(label='Textual Prompt', placeholder="Ex: A man with yellow ballon head is riding a bike on the street of New York City", value="A man with yellow ballon head is riding a bike on the street of New York City")
+                        prompt_stage1 = gr.Textbox(label='Textual Prompt', placeholder=f"Ex: {default_prompt}")
                     with gr.Row():
                         image_stage1 = gr.Image(label='Image Prompt (first select Image-to-Video model from advanced options to enable image upload)', show_label=True, scale=1, show_download_button=False, interactive=False)
                 with gr.Column():
